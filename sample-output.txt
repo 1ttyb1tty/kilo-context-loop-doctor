@@ -1,56 +1,97 @@
-# Real run on Kilo Code 7.8.15, Windows. Redacted: home path -> <home>,
-# project folder names -> VSCode_<project>, session ids truncated to 8 chars.
-# Numbers are untouched.
+# Real run on Kilo Code 7.8.15, Windows. Redacted: home path -> <home>, project folder names ->
+# VSCode_<project>, session ids truncated to 8 chars. Numbers and timestamps are untouched.
+#
+# Three modes, each a separate run of the same script: the report with the trajectory block, the
+# price-free account view, and the archive index the retirement path maintains.
 
+# python kilo_doctor.py --predict
 kilo_doctor  store=ok
-window assumed: 1048576 tokens | sessions: 8 | log stats: <home>\.local\share\kilo\log\opencode.log
+window assumed: 1048576 tokens | sessions: 12 | log stats: <home>\.local\share\kilo\log\opencode.log
 
 session                          sev% peak_ctx  calls  cold  warns uncached_in  parts   cmsg   dup
-ses_ea141659...   42.0     441k    295     2    120        270k   1308      0     2
-ses_ea0f86be...   27.6     289k    182     1      0        109k    695      0     2
+ses_ea0f86be...   35.0     367k    300     8     18       2.37M   1175      0     2
 ses_ec540146...   25.5     268k    224     1      0        211k    683      0     3
 ses_ea5a1fa7...   22.3     234k    138     0      0           0    593      0     0
+ses_e9f13821...   21.7     227k    175     2      0        285k    657      0     0
+ses_e9ef3998...   11.5     120k     19     0      0           0     78      0     0
 ses_ec14d747...    8.6      90k     43     0      0           0    132      0     2
 ses_ec3b2ff9...    7.9      83k     36     0      0           0    144      0     0
 ses_edee2bb1...    5.3      56k     77     0      0           0    232      0     0
+ses_e9ef3864...    5.1      53k      5     0      0           0     17      0     0
+ses_e9ef38f9...    4.2      44k      3     0      0           0     10      0     0
+ses_e9ef39dc...    4.2      44k      3     0      0           0     10      0     0
 ses_edf0877d...    2.5      26k     33     0      0           0     90      0     0
 
 legend: sev% = peak context / window | cold = sends at <10% cache hit (prune rewrote the
-        prefix) | cmsg = agent=compaction messages | dup = repeated identical text parts
+        prefix) | dup = repeated identical text parts | warns = log WARN events plus a
+        persisted high-water mark, so a rotated log cannot hide a known-stuck session
+        (display filters: --min-severity, --top; neither changes what --retire-stuck picks)
 
 DEGRADED (1) - do not resume these; a fresh session in the same folder costs nothing:
-  ses_ea141659...  42% of window  VSCode_<project>  last used 1 min ago
+  ses_ea0f86be...  35% of window  VSCode_<project>  last used 4 min ago  ~13.6h to window at the observed rate  stuck since 2026-10-22T00:54:09.774Z (UTC)
 
+trend (the store's own per-call usage; rate = the last hour when the session has three
+       calls in it, else a straight line through the whole session; pay% = est payload
+       at its last recorded warning / 1250000 B; '-' = too little data to extrapolate):
+session                        first_ctx  peak_ctx  hours      tok/h   eta_h last_warn_B   pay%
+ses_ea5a1fa7...       12k      234k    0.7  296k (1h)     2.8           -      -
+ses_e9f13821...       26k      227k    1.2  143k (1h)     5.7           -      -
+ses_ec540146...       20k      268k    3.9   75k (1h)    10.5           -      -
+ses_ea0f86be...       27k      367k   10.0   50k (1h)    13.6     1364681    109
+ses_ec14d747...       20k       90k    1.2   44k (1h)    21.9           -      -
+ses_edf0877d...       17k       26k    0.6   15k (1h)    66.8           -      -
+ses_edee2bb1...       12k       56k   94.1        462  2148.8           -      -
+ses_e9ef3998...       24k      120k    0.1          -       -           -      -
+ses_ec3b2ff9...       12k       83k    0.3          -       -           -      -
+ses_e9ef3864...       24k       53k    0.0          -       -           -      -
+ses_e9ef38f9...       24k       44k    0.0          -       -           -      -
+ses_e9ef39dc...       24k       44k    0.0          -       -           -      -
+
+marker queries: compaction-parts=0 compaction-agent-msgs=0 partless-msgs=3 (a pass that left no marker is possible; these counts make 'none' auditable)
 compaction markers on record: none
 
+# python kilo_doctor.py --account --hours 12
 === account: local record, in tokens (no price table needed) ===
-project                                       sess  calls      input    output  cache_read       total    share  peak_call
-<home>/Documents/VSCode_<project>         2    331      1.89M      160k      66.17M      68.23M    51.2%       441k
-<user>/Documents/VSCode_<project>     2    320      1.11M      125k      38.33M      39.56M    29.7%       289k
-<home>/Documents/VSCode_<project>        1    224       806k       86k      21.35M      22.24M    16.7%       268k
-<home>/Documents/VSCode_<project>      1     77       216k       13k       1.56M       1.79M     1.3%        56k
-<home>/Documents/VSCode_<project>          1     43       114k       20k       1.09M       1.22M     0.9%        90k
-<user>/AppData/Local/Programs/Microsoft VS Code     1     33        85k        4k        235k        324k     0.2%        26k
-TOTAL                                            8   1028      4.22M      408k     128.74M     133.37M   100.0%
+project                                       sess  calls      input    output  cache_read       total   share  worst%  peak_call
+<home>/Documents/VSCode_<project>     2    438      3.76M      171k      65.93M      69.86M   58.5%    35.0%       367k
+<home>/Documents/VSCode_<project>         6    241       987k       96k      22.92M      24.00M   20.1%    21.7%       227k
+<home>/Documents/VSCode_<project>        1    224       806k       86k      21.35M      22.24M   18.6%    25.5%       268k
+<home>/Documents/VSCode_<project>      1     77       216k       13k       1.56M       1.79M    1.5%     5.3%        56k
+<home>/Documents/VSCode_<project>          1     43       114k       20k       1.09M       1.22M    1.0%     8.6%        90k
+<home>/AppData/Local/Programs/Microsoft VS Code     1     33        85k        4k        235k        324k    0.3%     2.5%        26k
+TOTAL                                           12   1056      5.97M      389k     113.08M     119.44M   100.0%
 shared pot: every session and project draws on the same allowance, so the account line is
 the one that matters for exhaustion - not any single session's total.
+repeat offenders (a session has taken this project past 34% of the window):
+  <home>/Documents/VSCode_<project>  worst call 367k tokens = 35% of window over 2 session(s)
+  the regime re-enters per session: start a fresh one rather than resuming a long one.
 
 === burn rate: tokens per hour (input + cache read), last 12 h ===
-  2026-10-21T23      31.05M   104 calls  ##############################################
-  2026-10-21T22      32.23M   173 calls  ################################################
-  2026-10-21T21      18.24M    90 calls  ###########################
-  2026-10-21T15       2.79M    47 calls  ####
-  2026-10-21T14       3.96M    40 calls  #####
-  2026-10-21T13        967k    23 calls  #
-  2026-10-20T18      10.50M    57 calls  ###############
-  2026-10-20T17       6.72M    81 calls  ##########
+  2026-10-22T01      13.43M    55 calls  #################
+  2026-10-22T00      36.95M   251 calls  ################################################
+  2026-10-21T23       8.39M    45 calls  ##########
+  2026-10-21T22      13.91M   106 calls  ##################
+  2026-10-21T21        184k     3 calls  
+  2026-10-21T15       2.47M    45 calls  ###
+  2026-10-20T18      10.50M    57 calls  #############
+  2026-10-20T17       6.72M    81 calls  ########
   2026-10-15T09        606k    18 calls  
   2026-10-15T08        598k    25 calls  
   2026-10-14T21       1.05M    36 calls  #
   2026-10-14T18       1.06M     6 calls  #
-  busiest hour: 2026-10-21T22 with 32.23M tokens in 173 calls
+  busiest hour: 2026-10-22T00 with 36.95M tokens in 251 calls
 
 === retired sessions: archived, NOT counted above ===
-  20 archive(s), 41.1 MB, holding 43.43M in + 1.60M out + 1.33B cache read = 1.38B tokens
+  21 archive(s), 45.3 MB, holding 45.24M in + 1.76M out + 1.41B cache read = 1.46B tokens
   the store's record is incomplete by that much; the provider remains the authority on
   what was actually spent, and on what is left.
+
+# python kilo_doctor.py --list-archives
+=== retired-session archives: 21 file(s), 21 manifest row(s) in <home>\.local\share\kilo\retired-sessions ===
+session                          role     msgs      bytes archived_at                   in       out cache_read
+ses_ea141659...   target    327      4.26M 2026-10-22T03:07:37+0300     1.81M      157k    79.29M
+ses_ea48263b...   descendant     25      1.17M 2026-10-22T01:55:09+0300      184k        9k     3.02M
+ses_ea4826dc...   descendant     21       883k 2026-10-22T01:55:05+0300      136k        3k     1.90M
+... (18 more rows) ...
+TOTAL (21 rows)                                                                     45.24M     1.76M     1.41B
+restore: kilo import <home>\.local\share\kilo\retired-sessions\<session>.json
