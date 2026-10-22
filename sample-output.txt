@@ -3,16 +3,18 @@
 #
 # Three modes, each a separate run of the same script: the report with the trajectory block, the
 # price-free account view, and the archive index the retirement path maintains.
+#
+# Regenerate with: python build_sample.py
 
 # python kilo_doctor.py --predict
 kilo_doctor  store=ok
 window assumed: 1048576 tokens | sessions: 12 | log stats: <home>\.local\share\kilo\log\opencode.log
 
 session                          sev% peak_ctx  calls  cold  warns uncached_in  parts   cmsg   dup
-ses_ea0f86be...   35.0     367k    300     8     18       2.37M   1175      0     2
+ses_ea0f86be...   40.0     420k    337    10     48       3.15M   1334      0     2
 ses_ec540146...   25.5     268k    224     1      0        211k    683      0     3
+ses_e9f13821...   23.6     248k    196     3      0        522k    733      0     0
 ses_ea5a1fa7...   22.3     234k    138     0      0           0    593      0     0
-ses_e9f13821...   21.7     227k    175     2      0        285k    657      0     0
 ses_e9ef3998...   11.5     120k     19     0      0           0     78      0     0
 ses_ec14d747...    8.6      90k     43     0      0           0    132      0     2
 ses_ec3b2ff9...    7.9      83k     36     0      0           0    144      0     0
@@ -28,16 +30,16 @@ legend: sev% = peak context / window | cold = sends at <10% cache hit (prune rew
         (display filters: --min-severity, --top; neither changes what --retire-stuck picks)
 
 DEGRADED (1) - do not resume these; a fresh session in the same folder costs nothing:
-  ses_ea0f86be...  35% of window  VSCode_<project>  last used 4 min ago  ~13.6h to window at the observed rate  stuck since 2026-10-22T00:54:09.774Z (UTC)
+  ses_ea0f86be...  40% of window  VSCode_<project>  last used 2 min ago  ~5.6h to window at the observed rate  stuck since 2026-10-22T00:54:09.774Z (UTC)
 
 trend (the store's own per-call usage; rate = the last hour when the session has three
        calls in it, else a straight line through the whole session; pay% = est payload
        at its last recorded warning / 1250000 B; '-' = too little data to extrapolate):
 session                        first_ctx  peak_ctx  hours      tok/h   eta_h last_warn_B   pay%
 ses_ea5a1fa7...       12k      234k    0.7  296k (1h)     2.8           -      -
-ses_e9f13821...       26k      227k    1.2  143k (1h)     5.7           -      -
+ses_ea0f86be...       27k      420k   10.3  113k (1h)     5.6     1575983    126
+ses_e9f13821...       26k      248k    1.5  135k (1h)     5.9           -      -
 ses_ec540146...       20k      268k    3.9   75k (1h)    10.5           -      -
-ses_ea0f86be...       27k      367k   10.0   50k (1h)    13.6     1364681    109
 ses_ec14d747...       20k       90k    1.2   44k (1h)    21.9           -      -
 ses_edf0877d...       17k       26k    0.6   15k (1h)    66.8           -      -
 ses_edee2bb1...       12k       56k   94.1        462  2148.8           -      -
@@ -53,21 +55,21 @@ compaction markers on record: none
 # python kilo_doctor.py --account --hours 12
 === account: local record, in tokens (no price table needed) ===
 project                                       sess  calls      input    output  cache_read       total   share  worst%  peak_call
-<home>/Documents/VSCode_<project>     2    438      3.76M      171k      65.93M      69.86M   58.5%    35.0%       367k
-<home>/Documents/VSCode_<project>         6    241       987k       96k      22.92M      24.00M   20.1%    21.7%       227k
-<home>/Documents/VSCode_<project>        1    224       806k       86k      21.35M      22.24M   18.6%    25.5%       268k
-<home>/Documents/VSCode_<project>      1     77       216k       13k       1.56M       1.79M    1.5%     5.3%        56k
-<home>/Documents/VSCode_<project>          1     43       114k       20k       1.09M       1.22M    1.0%     8.6%        90k
-<home>/AppData/Local/Programs/Microsoft VS Code     1     33        85k        4k        235k        324k    0.3%     2.5%        26k
-TOTAL                                           12   1056      5.97M      389k     113.08M     119.44M   100.0%
+<home>/Documents/VSCode_<project>     2    475      4.59M      189k      76.58M      81.36M   60.0%    40.0%       420k
+<home>/Documents/VSCode_<project>         6    262      1.24M      105k      27.40M      28.75M   21.2%    23.6%       248k
+<home>/Documents/VSCode_<project>        1    224       806k       86k      21.35M      22.24M   16.4%    25.5%       268k
+<home>/Documents/VSCode_<project>      1     77       216k       13k       1.56M       1.79M    1.3%     5.3%        56k
+<home>/Documents/VSCode_<project>          1     43       114k       20k       1.09M       1.22M    0.9%     8.6%        90k
+<home>/AppData/Local/Programs/Microsoft VS Code     1     33        85k        4k        235k        324k    0.2%     2.5%        26k
+TOTAL                                           12   1114      7.06M      417k     128.21M     135.68M   100.0%
 shared pot: every session and project draws on the same allowance, so the account line is
 the one that matters for exhaustion - not any single session's total.
 repeat offenders (a session has taken this project past 34% of the window):
-  <home>/Documents/VSCode_<project>  worst call 367k tokens = 35% of window over 2 session(s)
+  <home>/Documents/VSCode_<project>  worst call 420k tokens = 40% of window over 2 session(s)
   the regime re-enters per session: start a fresh one rather than resuming a long one.
 
 === burn rate: tokens per hour (input + cache read), last 12 h ===
-  2026-10-22T01      13.43M    55 calls  #################
+  2026-10-22T01      29.64M   113 calls  ######################################
   2026-10-22T00      36.95M   251 calls  ################################################
   2026-10-21T23       8.39M    45 calls  ##########
   2026-10-21T22      13.91M   106 calls  ##################

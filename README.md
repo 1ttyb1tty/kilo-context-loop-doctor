@@ -67,7 +67,9 @@ python verify_restore.py                     # prove the archives import cleanly
 session, so a filter cannot change which sessions `--retire-stuck` picks.
 
 `sample-output.txt` is a real run, redacted: home path, project folder names and session ids. The
-numbers and timestamps are untouched.
+numbers and timestamps are untouched, and `build_sample.py` regenerates it from a live run with the
+redaction counted and asserted (a rule that stops matching fails the build rather than publishing a
+sample that leaks).
 
 ## Safety model
 
@@ -114,6 +116,7 @@ reporting are read-only.
 | `kilo_doctor.py` | detect, report, archive-and-retire stuck sessions (single file, stdlib only) |
 | `kilo_account.py` | thin wrapper over `--account`: tokens by project, burn rate per hour |
 | `verify_restore.py` | imports archives into a scratch store and checks the counts match |
+| `build_sample.py` | regenerates `sample-output.txt` from a live run, redacting identity by counted rule |
 | `SKILL.md` | the agent-skill form: when to reach for this, thresholds, traps, limits |
 | `sample-output.txt` | a real run of three modes, redacted |
 | `LICENSE` | MIT — © 2026 Victor Simeonov |
